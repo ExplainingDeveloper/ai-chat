@@ -1,0 +1,38 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "YOUR_FIREBASE_PROJECT_ID",
+          "appId": "YOUR_ANDROID_APP_ID",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "YOUR_FIREBASE_PROJECT_ID",
+          "appId": "YOUR_IOS_APP_ID",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "YOUR_FIREBASE_PROJECT_ID",
+          "appId": "YOUR_MACOS_APP_ID",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "web": {
+        "default": {
+          "projectId": "YOUR_FIREBASE_PROJECT_ID",
+          "appId": "YOUR_WEB_APP_ID",
+          "authDomain": "YOUR_FIREBASE_PROJECT_ID.firebaseapp.com",
+          "storageBucket": "YOUR_FIREBASE_PROJECT_ID.firebasestorage.app",
+          "fileOutput": "lib/firebase_options.dart"
+        }
+      }
+    }
+  }
+}
