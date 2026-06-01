@@ -17,12 +17,11 @@ Future<void> main() async {
 
 Future<FirebaseOptions> _firebaseOptionsWithEnvApiKey() async {
   final Map<String, String> env = await _loadDotEnv();
-  final String? apiKey = env['FIREBASE_API_KEY'] ?? env['GEMINI_API_KEY'];
+  final String? apiKey = env['GEMINI_API_KEY'];
 
   if (apiKey == null || apiKey.isEmpty) {
     return DefaultFirebaseOptions.currentPlatform;
   }
-  
 
   if (kIsWeb) {
     return FirebaseOptions(
