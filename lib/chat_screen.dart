@@ -287,7 +287,7 @@ class _ChatScreenState extends State<ChatScreen> {
             _isTyping = false;
             _isStreamingInProgress = false;
             _messages[assistantIndex] = const ChatMessage(
-              text: 'Gemini 응답을 가져오지 못했습니다. 환경 설정과 API 키를 확인해 주세요.',
+                text: 'Gemini 응답을 가져오지 못했습니다. Firebase 설정을 확인해 주세요.',
               isUser: false,
             );
           });
@@ -304,7 +304,7 @@ class _ChatScreenState extends State<ChatScreen> {
         _isTyping = false;
         _isStreamingInProgress = false;
         _messages[assistantIndex] = const ChatMessage(
-          text: 'Gemini 응답을 가져오지 못했습니다. 환경 설정과 API 키를 확인해 주세요.',
+          text: 'Gemini 응답을 가져오지 못했습니다. Firebase 설정을 확인해 주세요.',
           isUser: false,
         );
       });
