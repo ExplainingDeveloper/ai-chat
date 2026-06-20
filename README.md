@@ -1,5 +1,7 @@
 # flutter_ai_chat
 
+<a href="https://buymeacoffee.com/codewithsora" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+
 Flutter와 Firebase를 함께 배우는 예제 프로젝트입니다.
 
 ## 소개

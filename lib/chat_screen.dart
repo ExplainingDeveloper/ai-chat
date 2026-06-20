@@ -4,25 +4,7 @@ import 'package:firebase_ai/firebase_ai.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-class ChatMessage {
-  const ChatMessage({
-    required this.text,
-    required this.isUser,
-    this.isStreaming = false,
-  });
-
-  final String text;
-  final bool isUser;
-  final bool isStreaming;
-
-  ChatMessage copyWith({String? text, bool? isUser, bool? isStreaming}) {
-    return ChatMessage(
-      text: text ?? this.text,
-      isUser: isUser ?? this.isUser,
-      isStreaming: isStreaming ?? this.isStreaming,
-    );
-  }
-}
+import 'models/chat_message.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -287,7 +269,7 @@ class _ChatScreenState extends State<ChatScreen> {
             _isTyping = false;
             _isStreamingInProgress = false;
             _messages[assistantIndex] = const ChatMessage(
-                text: 'Gemini 응답을 가져오지 못했습니다. Firebase 설정을 확인해 주세요.',
+              text: 'Gemini 응답을 가져오지 못했습니다. Firebase 설정을 확인해 주세요.',
               isUser: false,
             );
           });
