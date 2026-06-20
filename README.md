@@ -39,11 +39,10 @@ flutter pub get
 flutter run
 ```
 
-## 강의 영상
+## 링크
 
-아래 링크는 추후 추가할 예정입니다.
-
-- YouTube: https://YOUR-YOUTUBE-URL-HERE
+- YouTube 강의 : https://youtu.be/ZPanY02a6F8
+- 깃헙 코드 : https://github.com/ExplainingDeveloper/ai-chat
 
 ## 참고
 
