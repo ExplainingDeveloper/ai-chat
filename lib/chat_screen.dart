@@ -5,9 +5,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'models/chat_message.dart';
+import 'models/chat_room.dart';
+import 'services/chat_repository.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({super.key, required this.roomId, this.roomTitle});
+
+  final String roomId;
+  final String? roomTitle;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -16,17 +21,19 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
-  final List<ChatMessage> _messages = <ChatMessage>[
-    const ChatMessage(isUser: false, text: '안녕하세요. 무엇을 도와드릴까요?'),
-    const ChatMessage(isUser: true, text: 'Flutter로 채팅 UI를 만들어보고 싶어요.'),
-    const ChatMessage(isUser: false, text: '좋습니다. 화면 구조부터 깔끔하게 잡아둘게요.'),
-  ];
+  final ChatRepository _repository = ChatRepository();
+  final List<ChatMessage> _messages = <ChatMessage>[];
 
   ChatSession? _chatSession;
   bool _isTyping = false;
   bool _isUsingFallback = false;
   StreamSubscription<GenerateContentResponse>? _streamSubscription;
   bool _isStreamingInProgress = false;
+
+  void _logError(Object error, StackTrace stackTrace, String context) {
+    debugPrint('ChatScreen $context failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
 
   @override
   void initState() {
@@ -56,7 +63,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _initializeChat() async {
+    debugPrint(
+      'ChatScreen _initializeChat start; Firebase.apps=${Firebase.apps.length}',
+    );
+
     if (Firebase.apps.isEmpty) {
+      debugPrint('ChatScreen fallback: Firebase.apps is empty');
       if (!mounted) {
         return;
       }
@@ -68,18 +80,50 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     try {
+      debugPrint('ChatScreen creating room and loading history');
+      await _repository.createRoom(
+        ChatRoom(
+          roomId: widget.roomId,
+          title: widget.roomTitle ?? '새 채팅',
+          preview: '메시지를 입력하면 이 방에 기록됩니다.',
+          date: DateTime.now().toIso8601String().substring(0, 10),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+
+      final List<ChatMessage> loadedMessages = await _repository.fetchMessages(
+        widget.roomId,
+      );
+
+      if (loadedMessages.isEmpty) {
+        final ChatMessage welcomeMessage = await _repository.addMessage(
+          ChatMessage(
+            roomId: widget.roomId,
+            text: '안녕하세요. 무엇을 도와드릴까요?',
+            isUser: false,
+            createdAt: DateTime.now(),
+          ),
+        );
+        loadedMessages.add(welcomeMessage);
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(loadedMessages);
+      });
+
       final GenerativeModel model = FirebaseAI.googleAI().generativeModel(
         model: 'gemini-3-flash-preview',
         systemInstruction: Content.system('너는 시크한 고양이야, 항상 냐용 으로 말을 끝내도록해줘.'),
       );
 
-      final List<Content> history = _messages
-          .map(
-            (ChatMessage message) => message.isUser
-                ? Content.text(message.text)
-                : Content.model(<Part>[TextPart(message.text)]),
-          )
-          .toList();
+      final List<Content> history = _messages.map(_toContent).toList();
 
       if (!mounted) {
         return;
@@ -88,7 +132,10 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         _chatSession = model.startChat(history: history);
       });
-    } catch (_) {
+
+      debugPrint('ChatScreen chat session initialized successfully');
+    } catch (error, stackTrace) {
+      _logError(error, stackTrace, '_initializeChat');
       if (!mounted) {
         return;
       }
@@ -96,7 +143,17 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         _isUsingFallback = true;
       });
+
+      debugPrint(
+        'ChatScreen fallback: initialization error triggered fallback',
+      );
     }
+  }
+
+  Content _toContent(ChatMessage message) {
+    return message.isUser
+        ? Content.text(message.text)
+        : Content.model(<Part>[TextPart(message.text)]);
   }
 
   void _updateMessage(int index, ChatMessage message) {
@@ -121,6 +178,19 @@ class _ChatScreenState extends State<ChatScreen> {
     return '$previous$incoming';
   }
 
+  String _buildRoomTitle(String text) {
+    final String normalizedText = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalizedText.isEmpty) {
+      return '새 채팅';
+    }
+
+    if (normalizedText.length <= 20) {
+      return normalizedText;
+    }
+
+    return '${normalizedText.substring(0, 20)}...';
+  }
+
   Future<void> _sendWithFallback(String text) async {
     await Future<void>.delayed(const Duration(milliseconds: 900));
     if (!mounted) {
@@ -131,9 +201,18 @@ class _ChatScreenState extends State<ChatScreen> {
         ? '현재는 Firebase 연결이 없어서 로컬 응답으로 보여주고 있어요.'
         : '메시지를 받았어요. Firebase 초기화가 완료되면 실시간 응답으로 바뀝니다.';
 
+    final ChatMessage savedReply = await _repository.addMessage(
+      ChatMessage(
+        roomId: widget.roomId,
+        text: reply,
+        isUser: false,
+        createdAt: DateTime.now(),
+      ),
+    );
+
     setState(() {
       _isTyping = false;
-      _messages.add(ChatMessage(text: reply, isUser: false));
+      _messages.add(savedReply);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
@@ -170,8 +249,21 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
+    final bool shouldUpdateRoomTitle =
+        widget.roomTitle == null || widget.roomTitle!.trim() == '새 채팅';
+
+    final ChatMessage userMessage = await _repository.addMessage(
+      ChatMessage(
+        roomId: widget.roomId,
+        text: text,
+        isUser: true,
+        createdAt: DateTime.now(),
+      ),
+      roomTitle: shouldUpdateRoomTitle ? _buildRoomTitle(text) : null,
+    );
+
     setState(() {
-      _messages.add(ChatMessage(text: text, isUser: true));
+      _messages.add(userMessage);
       _isTyping = true;
       _textController.clear();
     });
@@ -179,15 +271,26 @@ class _ChatScreenState extends State<ChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
     if (_chatSession == null || _isUsingFallback) {
+      debugPrint(
+        'ChatScreen sending fallback response; sessionNull=${_chatSession == null}, usingFallback=$_isUsingFallback',
+      );
       await _sendWithFallback(text);
       return;
     }
 
     final int assistantIndex = _messages.length;
+    final ChatMessage assistantMessage = await _repository.addMessage(
+      ChatMessage(
+        roomId: widget.roomId,
+        text: '',
+        isUser: false,
+        createdAt: DateTime.now(),
+        isStreaming: true,
+      ),
+      shouldUpdateRoomSummary: false,
+    );
     setState(() {
-      _messages.add(
-        const ChatMessage(text: '', isUser: false, isStreaming: true),
-      );
+      _messages.add(assistantMessage.copyWith(isStreaming: true));
       _isTyping = false;
     });
 
@@ -217,10 +320,23 @@ class _ChatScreenState extends State<ChatScreen> {
           }
 
           if (mounted) {
+            unawaited(
+              _repository.updateMessage(
+                _messages[assistantIndex].copyWith(
+                  messageId: assistantMessage.messageId,
+                  roomId: widget.roomId,
+                  text: accumulatedText,
+                  isStreaming: true,
+                ),
+              ),
+            );
+
             _updateMessage(
               assistantIndex,
               _messages[assistantIndex].copyWith(
                 text: accumulatedText,
+                messageId: assistantMessage.messageId,
+                roomId: widget.roomId,
                 isStreaming: true,
               ),
             );
@@ -251,6 +367,16 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           }
 
+          unawaited(
+            _repository.updateRoomSummary(
+              roomId: widget.roomId,
+              preview: _messages[assistantIndex].text,
+              lastMessage: _messages[assistantIndex].text,
+              lastMessageAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
+
           if (mounted) {
             setState(() {
               _isStreamingInProgress = false;
@@ -259,7 +385,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
           streamDone.complete();
         },
-        onError: (e) {
+        onError: (Object e, StackTrace stackTrace) {
+          _logError(e, stackTrace, '_chatSession stream');
           if (!mounted) {
             streamDone.completeError(e);
             return;
@@ -279,15 +406,18 @@ class _ChatScreenState extends State<ChatScreen> {
       );
 
       await streamDone.future;
-    } catch (e) {
+    } catch (error, stackTrace) {
+      _logError(error, stackTrace, '_handleSend');
       if (!mounted) return;
 
       setState(() {
         _isTyping = false;
         _isStreamingInProgress = false;
-        _messages[assistantIndex] = const ChatMessage(
+        _messages[assistantIndex] = ChatMessage(
+          roomId: widget.roomId,
           text: 'Gemini 응답을 가져오지 못했습니다. Firebase 설정을 확인해 주세요.',
           isUser: false,
+          createdAt: DateTime.now(),
         );
       });
     }
