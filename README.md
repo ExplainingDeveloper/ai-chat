@@ -41,7 +41,8 @@ flutter run
 
 ## 링크
 
-- YouTube 강의 : https://youtu.be/ZPanY02a6F8
+- YouTube 강의 1강: https://youtu.be/ZPanY02a6F8
+- YouTube 강의 2강: https://youtu.be/ZeQ0HlZ8yVo
 - 깃헙 코드 : https://github.com/ExplainingDeveloper/ai-chat
 
 ## 참고
