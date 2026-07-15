@@ -1,23 +1,39 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/chat_message.dart';
 import '../models/chat_room.dart';
 
 class ChatRepository {
-  ChatRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  ChatRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _auth = auth ?? FirebaseAuth.instance;
 
   final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
 
-  CollectionReference<ChatRoom> get _rooms =>
-      _firestore.collection('chats').withConverter<ChatRoom>(
-            fromFirestore: ChatRoom.fromFirestore,
-            toFirestore: (ChatRoom room, SetOptions? options) =>
-                room.toFirestore(),
-          );
+  String get _uid {
+    final String? uid = _auth.currentUser?.uid;
+    if (uid == null) {
+      throw StateError('채팅을 저장하려면 로그인이 필요합니다.');
+    }
+    return uid;
+  }
+
+  CollectionReference<ChatRoom> get _rooms => _firestore
+      .collection('users')
+      .doc(_uid)
+      .collection('chats')
+      .withConverter<ChatRoom>(
+        fromFirestore: ChatRoom.fromFirestore,
+        toFirestore: (ChatRoom room, SetOptions? options) => room.toFirestore(),
+      );
 
   CollectionReference<ChatMessage> _messages(String roomId) {
-    return _rooms.doc(roomId).collection('messages').withConverter<ChatMessage>(
+    return _rooms
+        .doc(roomId)
+        .collection('messages')
+        .withConverter<ChatMessage>(
           fromFirestore: ChatMessage.fromFirestore,
           toFirestore: (ChatMessage message, SetOptions? options) =>
               message.toFirestore(),
@@ -113,6 +129,8 @@ class ChatRepository {
     }
 
     await _firestore
+        .collection('users')
+        .doc(_uid)
         .collection('chats')
         .doc(roomId)
         .set(data, SetOptions(merge: true));
@@ -133,10 +151,12 @@ class ChatRepository {
         .orderBy('updatedAt', descending: true)
         .get(const GetOptions(source: Source.serverAndCache));
 
-    return snapshot.docs.map((QueryDocumentSnapshot<ChatRoom> doc) {
-      final ChatRoom room = doc.data();
-      return room.copyWith(roomId: doc.id);
-    }).toList(growable: true);
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<ChatRoom> doc) {
+          final ChatRoom room = doc.data();
+          return room.copyWith(roomId: doc.id);
+        })
+        .toList(growable: true);
   }
 
   Future<List<ChatMessage>> fetchMessages(String roomId) async {
@@ -144,9 +164,11 @@ class ChatRepository {
       roomId,
     ).orderBy('createdAt').get(const GetOptions(source: Source.serverAndCache));
 
-    return snapshot.docs.map((QueryDocumentSnapshot<ChatMessage> doc) {
-      final ChatMessage message = doc.data();
-      return message.copyWith(messageId: doc.id, roomId: roomId);
-    }).toList(growable: true);
+    return snapshot.docs
+        .map((QueryDocumentSnapshot<ChatMessage> doc) {
+          final ChatMessage message = doc.data();
+          return message.copyWith(messageId: doc.id, roomId: roomId);
+        })
+        .toList(growable: true);
   }
 }

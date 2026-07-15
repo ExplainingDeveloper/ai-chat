@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"verifyPhoneNumber\\\\|typedef Phone\" -r /Users/sora/.pub-cache/hosted/pub.dev/firebase_auth-6.5.4/lib/src/firebase_auth.dart | head -30)",
+      "Read(//Users/sora/.pub-cache/hosted/pub.dev/firebase_auth-6.5.4/lib/src/**)",
+      "Bash(grep -rn \"class FirebaseAuthMultiFactorException\\\\|class MultiFactorResolver\\\\|resolveSignIn\\\\|List<MultiFactorInfo> get hints\\\\|MultiFactorSession get session\" /Users/sora/.pub-cache/hosted/pub.dev/firebase_auth-6.5.4/lib/src/*.dart)",
+      "Bash(grep -n \"Future.*signOut\\\\|disconnect\" /Users/sora/.pub-cache/hosted/pub.dev/google_sign_in-*/lib/src/*.dart 2>/dev/null | head -20)",
+      "Read(//Users/sora/.pub-cache/hosted/pub.dev/**)",
+      "Bash(grep -n \"class PhoneMultiFactorInfo\\\\|class MultiFactorInfo\" -A 20 /Users/sora/.pub-cache/hosted/pub.dev/firebase_auth-6.5.4/lib/src/multi_factor.dart)",
+      "Bash(grep -rn \"class PhoneMultiFactorInfo\\\\|class MultiFactorInfo\\\\|displayName\\\\|phoneNumber\\\\|factorId\\\\|uid\" /Users/sora/.pub-cache/hosted/pub.dev/firebase_auth-6.5.4/lib/src/multi_factor.dart)",
+      "Bash(grep -rn \"class MultiFactorInfo\\\\|class PhoneMultiFactorInfo\" -A 25 /Users/sora/.pub-cache/hosted/pub.dev/firebase_auth_platform_interface-9.0.3/lib/src/*.dart 2>/dev/null | head -80)",
+      "Read(//Users/sora/.pub-cache/hosted/pub.dev/firebase_auth_platform_interface-9.0.3/lib/src/**)",
+      "Bash(grep -rln \"PhoneMultiFactorInfo\" /Users/sora/.pub-cache/hosted/pub.dev/firebase_auth_platform_interface-*/lib 2>/dev/null)",
+      "Bash(grep -n \"class PhoneMultiFactorInfo\\\\|class MultiFactorInfo\" -A 30 /Users/sora/.pub-cache/hosted/pub.dev/firebase_auth_platform_interface-9.0.3/lib/src/platform_interface/platform_interface_multi_factor.dart)",
+      "Read(//Users/sora/.pub-cache/hosted/pub.dev/firebase_auth_platform_interface-9.0.3/lib/src/platform_interface/**)"
+    ]
+  }
+}

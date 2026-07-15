@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'chat_screen.dart';
 import 'models/chat_room.dart';
 import 'services/chat_repository.dart';
+import 'settings_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -103,6 +104,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
       appBar: AppBar(
         title: const Text('채팅 목록'),
         actions: <Widget>[
+          IconButton(
+            onPressed: () {
+              Navigator.push<void>(
+                context,
+                MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+              );
+            },
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: '설정',
+          ),
           IconButton(
             onPressed: () => _startNewChat(context),
             icon: const Icon(Icons.add_rounded),
