@@ -32,6 +32,22 @@ Firebase 설정 파일은 실제 실행에 필요하지만, 강의에서는 직�
 - `ios/Runner/GoogleService-Info.plist.example`
 - `macos/Runner/GoogleService-Info.plist.example`
 
+## Firestore Rules 배포
+
+`firestore.rules` 파일을 수정한 뒤에는 Firebase CLI로 아래처럼 배포합니다.
+
+```bash
+firebase login
+firebase use <your-firebase-project-id>
+firebase deploy --only firestore:rules
+```
+
+프로젝트를 직접 지정해서 배포할 수도 있습니다.
+
+```bash
+firebase deploy --only firestore:rules --project <your-firebase-project-id>
+```
+
 ## 실행 방법
 
 ```bash
