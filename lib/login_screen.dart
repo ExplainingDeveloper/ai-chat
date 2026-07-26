@@ -1,9 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'chat_list_screen.dart';
 import 'utils/login_method.dart';
-import 'utils/mfa_challenge.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,20 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await _loginMethod.signInWithGoogle();
       _goToChatList();
-    } on FirebaseAuthMultiFactorException catch (e) {
-      if (!mounted) {
-        return;
-      }
-      final credential = await resolveSecondFactorChallenge(
-        context: context,
-        loginMethod: _loginMethod,
-        resolver: e.resolver,
-        onMessage: _showMessage,
-        dialogTitle: '로그인 인증번호 입력',
-      );
-      if (credential != null) {
-        _goToChatList();
-      }
     } catch (e) {
       print('로그인에 실패했습니다: $e');
       if (mounted) {
@@ -56,16 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _isSigningIn = false);
       }
     }
-  }
-
-  void _showMessage(String message) {
-    print(message);
-    if (!mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override

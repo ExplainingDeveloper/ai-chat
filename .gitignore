@@ -62,3 +62,8 @@ app.*.map.json
 
 .env
 /docs/
+scripts/
+# One-off admin scripts (scripts/enable-totp-mfa.mjs) need a service account key
+# and node_modules locally; neither should ever be committed.
+/scripts/service-account.json
+/scripts/node_modules/
